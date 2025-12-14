@@ -1,0 +1,64 @@
+// file: prisma/schema.prisma
+
+// ตั้งค่า Provider ฐานข้อมูล
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// --- โมเดลสำหรับฟีเจอร์ที่ต้องการ ---
+
+// 1. โมเดลผู้ใช้ (สำหรับ Login/Logout)
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String   // ในแอปจริงควร HASH รหัสผ่านนี้
+  name      String?
+  playlists Playlist[] // ผู้ใช้มีหลายเพลย์ลิสต์
+  
+  // ในการใช้งานจริงอาจเพิ่มบทบาท (Role) หรือข้อมูลอื่นๆ
+}
+
+// 2. โมเดลเพลง
+model Song {
+  id          String    @id @default(uuid())
+  title       String
+  artist      String
+  album       String?
+  duration    Int       // ความยาวเพลงเป็นวินาที
+  url         String    // URL สำหรับไฟล์เสียง
+  
+  // สำหรับเชื่อมโยงกับ Playlist
+  playlists PlaylistSong[]
+}
+
+// 3. โมเดลเพลย์ลิสต์ (สำหรับฟีเจอร์เพิ่ม/ลบ/แก้ไข)
+model Playlist {
+  id        String    @id @default(uuid())
+  name      String
+  description String?
+  
+  // การเชื่อมโยงกับ User (เจ้าของเพลย์ลิสต์)
+  userId    String
+  user      User      @relation(fields: [userId], references: [id])
+  
+  // เพลงในเพลย์ลิสต์ (Many-to-Many)
+  songs     PlaylistSong[]
+}
+
+// 4. โมเดลสำหรับความสัมพันธ์ Many-to-Many ระหว่าง Playlist และ Song
+model PlaylistSong {
+  id         String    @id @default(uuid())
+  playlistId String
+  songId     String
+  addedAt    DateTime  @default(now())
+
+  playlist   Playlist  @relation(fields: [playlistId], references: [id])
+  song       Song      @relation(fields: [songId], references: [id])
+
+  @@unique([playlistId, songId]) // ป้องกันไม่ให้มีเพลงซ้ำในเพลย์ลิสต์เดียว
+}
