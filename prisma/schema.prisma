@@ -3,7 +3,7 @@
 // ตั้งค่า Provider ฐานข้อมูล
 datasource db {
   provider = "sqlite"
-  url      = env("DATABASE_URL")
+  // บรรทัด url ถูกลบออกเพื่อให้รองรับ Prisma v7
 }
 
 generator client {
